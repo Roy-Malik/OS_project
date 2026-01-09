@@ -1,28 +1,38 @@
 # OS_project
-Social Network Analysis using Graph Algorithms
+Open System Call Wrapper in Linux 4.4
 
-This project was developed as a final project for the course Design and Analysis of Algorithms (CS2009). The objective is to apply classical algorithmic techniques to analyze a social network by modeling it as a graph and solving two fundamental problems: shortest path discovery and influence propagation.
+This project was developed as part of the Operating Systems (CS2006) course and focuses on understanding Linux kernel internals by modifying and extending the behavior of a core system call. The objective was to implement a custom wrapper around the open() system call in Linux Kernel 4.4.0, recompile the kernel, boot into it, and verify the modified behavior in a controlled environment.
 
-The social network is represented as a weighted graph using an adjacency list data structure. Each node represents a user, while edges represent connections between users with associated distance weights. This representation was chosen for its memory efficiency and fast neighbor traversal, especially suitable for sparse networks.
+The open() system call is one of the most fundamental interfaces between user space and the Linux kernel. Almost every program interacts with the filesystem through open(), making it a critical point for monitoring, logging, and access control. Wrapping this system call provides direct exposure to kernel–user boundaries and demonstrates low-level systems programming concepts.
 
-Part 1: Shortest Path Analysis
+Project Overview
 
-The first part of the project focuses on finding the shortest path between two users in the network. Two algorithms were implemented and compared:
+The kernel was modified to introduce a custom wrapper around open() that intercepts every file access request. The wrapper logs the filename and access flags to the kernel log and enforces a simple security policy by blocking access to files whose names contain the substring "secret", returning -EACCES.
 
-Dijkstra’s Algorithm, which guarantees the shortest path by exploring nodes in increasing order of distance from the source using a min-priority queue.
+The implementation required coordinated changes across multiple kernel components:
 
-A* Search Algorithm, a goal-directed extension of Dijkstra’s algorithm, which uses a heuristic function to prioritize nodes closer to the destination. The heuristic used is the node degree (number of direct connections).
+Adding the wrapper logic in fs/open.c
 
-Both implementations include full path reconstruction and formal worst-case time complexity analysis. Using a binary heap–based priority queue, the time complexity for both algorithms is
-O((V + E) log V), where V is the number of users and E is the number of connections.
+Registering the new system call in arch/x86/entry/syscalls/syscall_64.tbl
 
-Part 2: Longest Influence Chain
+Declaring the system call prototype in include/linux/syscalls.h
 
-The second part analyzes influence propagation within the network. The goal is to find the longest chain of users where influence scores strictly increase at each step. This problem is solved using Depth First Search (DFS) with Dynamic Programming (Memoization).
+Environment and Build Process
 
-For each user, the algorithm computes the longest increasing influence path starting from that node and stores intermediate results to avoid redundant computation. This guarantees that each node and edge is processed only once, resulting in a linear time complexity of
-O(V + E).
+All development and testing were performed inside Ubuntu 16.04.7 LTS running in VMware Workstation to ensure isolation and safety. The Linux 4.4.0 kernel source was compiled from scratch after installing the required build dependencies. The modified kernel was installed alongside the default kernel and selected at boot via GRUB.
 
-Conclusion
+During testing, common kernel development challenges were encountered, including systemd boot failures, missing dependencies, compilation errors, and virtual disk limitations. These were resolved through kernel boot parameter adjustments, dependency fixes, and filesystem resizing.
 
-This project demonstrates the practical application of graph algorithms, heuristic search, and dynamic programming to a realistic social network analysis problem, along with rigorous asymptotic complexity analysis.
+Outcome
+
+The project successfully:
+
+Modified and recompiled a stable Linux kernel
+
+Injected and registered a custom system call wrapper
+
+Booted and tested the modified kernel inside a virtual machine
+
+Verified syscall interception, logging, and access blocking behavior
+
+This project demonstrates a strong practical understanding of Linux kernel architecture, system calls, and low-level operating system concepts.
